@@ -1,36 +1,39 @@
 // api/contact.js
-import nodemailer from "nodemailer";
+const nodemailer = require('nodemailer');
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Méthode non autorisée" });
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
   const { name, email, message } = req.body;
 
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Champs manquants' });
+  }
+
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: 'gmail',
     auth: {
-      user: "trustdrivebyhamza@gmail.com",
-      pass: "2711Amel1998", // Mot de passe d'application Gmail
+      user: 'trustdrivebyhamza@gmail.com',
+      pass: process.env.GMAIL_APP_PASSWORD, // à configurer dans les variables Vercel
     },
   });
 
   try {
     await transporter.sendMail({
-      from: `"Formulaire TrustDrive" <trustdrivebyhamza@gmail.com>`,
-      to: "trustdrivebyhamza@gmail.com",
-      subject: `Nouveau message de ${name}`,
-      html: `
-        <p><strong>Nom :</strong> ${name}</p>
-        <p><strong>Email :</strong> ${email}</p>
-        <p><strong>Message :</strong><br>${message}</p>
-      `,
+      from: `"TrustDrive Contact" <trustdrivebyhamza@gmail.com>`,
+      to: 'trustdrivebyhamza@gmail.com',
+      subject: `Message de ${name}`,
+      text: message,
+      html: `<p><strong>Nom:</strong> ${name}</p>
+             <p><strong>Email:</strong> ${email}</p>
+             <p><strong>Message:</strong> ${message}</p>`,
     });
 
-    res.status(200).json({ message: "Message envoyé avec succès" });
-  } catch (error) {
-    console.error("Erreur lors de l'envoi :", error);
-    res.status(500).json({ message: "Erreur interne", error });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur lors de l’envoi de l’email.' });
   }
-}
+};
